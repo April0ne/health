@@ -1,0 +1,66 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.aprilhealth.dao.CheckItemDao">
+    <!--新增检查项-->
+    <insert id="addCheckItem" parameterType="checkItem">
+        insert into t_checkitem (code,name,sex,age,price,type,remark,attention) VALUES(#{code},#{name},#{sex},#{age},#{price},#{type},#{remark},#{attention});
+    </insert>
+
+    <!--查询检查项 : 分页,带查询条件:编码,项目名称,项目助记(数据库缺该数据-略)-->
+    <select id="findPageCheckItem" parameterType="queryPageBean" resultType="checkItem">
+        select * from t_checkitem
+        <where>
+            <if test="queryString != null and queryString.length() > 0" >
+                and name like concat('%',#{queryString},'%') or code like concat('%',#{queryString},'%')
+            </if>
+        </where>
+
+        /*使用PageHalper插件,该查询语句可以不写*/
+        <if test="currentPage != null and currentPage >= 0 and pageSize > 0 and pageSize != null" >
+            limit #{currentPage},#{pageSize}
+        </if>
+    </select>
+
+    <!--检查单个项目-->
+    <select id="findOneCheckItem" parameterType="Integer" resultType="CheckItem">
+        select  * from t_checkitem where id = #{id}
+    </select>
+
+    <!--查询表(t_checkgroup_checkitem)检查项信息(根据checkGroupId查询)-->
+    <select id="findCheckItemFromT_checkgroup_checkitem" parameterType="int" resultType="Integer">
+        select checkitem_id from t_checkgroup_checkitem where checkgroup_id = #{checkGroupId}
+    </select>
+
+    <!--查询所有检查组数据-->
+    <select id="findCheckItemFromT_checkitem" resultType="CheckItem">
+        select id,code,name,remark from t_checkitem
+    </select>
+
+    <!--根据条件查询总项目检查数-->
+    <select id="findSumCheckItem" parameterType="QueryPageBean" resultType="long">
+        SELECT count(*) FROM t_checkitem
+        <where>
+            <if test="queryString != null and queryString.length() > 0" >
+            and name like concat('%',#{queryString},'%') or code like concat('%',#{queryString},'%')
+            </if>
+        </where>
+    </select>
+
+    <!--修改检查项-->
+    <update id="updateCheckItem" parameterType="CheckItem" >
+        update t_checkitem set code=#{code},name=#{name},sex=#{sex},age=#{age},price=#{price},type=#{type},remark=#{remark},attention=#{attention}  where id = #{id}
+    </update>
+
+
+    <!--根据CheckItemID,从表t_checkgroup_checkitem查询对应关系-->
+    <select id="findCheckGroup_CheckItemByCheckItemID" parameterType="Integer" resultType="Integer">
+        SELECT count(*) FROM t_checkgroup_checkitem where checkitem_id = #{id}
+    </select>
+
+    <!--删除检查项-->
+    <delete id="deleteCheckItem" parameterType="Integer">
+        delete from t_checkitem where id = #{id}
+    </delete>
+
+</mapper>
