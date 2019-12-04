@@ -1,0 +1,27 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<beans  xmlns="http://www.springframework.org/schema/beans"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:context="http://www.springframework.org/schema/context"
+        xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+        xmlns:mvc="http://www.springframework.org/schema/mvc"
+        xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd
+        http://code.alibabatech.com/schema/dubbo
+        http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context.xsd">
+
+            <!--执行应用名称-->
+        <dubbo:application name="health_service"/>
+            <!--指定暴露服务的端口,如果不指定默认为20880-->
+        <dubbo:protocol name="dubbo" port="20887"/>
+            <!--指定服务注册中心地址-->
+        <dubbo:registry address="zookeeper://49.234.126.177:2181"/>
+            <!--批量扫描发布服务:通过注解方式发布服务:@Service发布服务-->
+        <dubbo:annotation package="com.aprilhealth.service.impl"/>
+        <!--&lt;!&ndash;等待时间,否则超时.&ndash;&gt;-->
+        <!--<dubbo:provider timeout="30000"/>-->
+
+</beans>
