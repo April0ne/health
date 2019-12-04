@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>服务器走丢了</title>
+    <script src="../js/jquery.min.js"></script>
+
+</head>
+<body>
+<h1 align="center"><font color="#9400d3" id="_font">恭喜你,中大奖了</font></h1>
+<script>
+
+    window.setInterval(changeStyle01, 325);
+
+    function changeStyle01() {
+        $("font").attr("color","#ff1493");
+        window.setInterval(changeStyle02, 325);
+    }
+
+    function changeStyle02(){
+        $("font").attr("color","#ffd700");
+        window.setInterval(changeStyle03, 325);
+    }
+    function changeStyle03(){
+        $("font").attr("color","#7fffd4");
+        window.setInterval(changeStyle01, 325);
+    }
+
+
+
+</script>
+</body>
+</html>

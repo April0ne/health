@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 页面meta -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>传智健康</title>
+        <meta name="description" content="传智健康">
+        <meta name="keywords" content="传智健康">
+        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+        <!-- 引入样式 -->
+        <link rel="stylesheet" href="plugins/elementui/index.css">
+        <link rel="stylesheet" href="css/login.css">
+    </head>
+    <body class="hold-transition skin-purple sidebar-mini">
+        <div id="app">
+            <div class="login-container">
+                <div class="loginBox">
+                  <form method="post" class="login-form" action="/login.do" label-position="left">
+                      <div class="title-container">
+                        <div class="logoInfo clearfix">
+                          <em class="logo"></em>
+                        </div>
+                      </div>
+                      <div>
+                        <span class="svg-container svg-container_login">
+                          <span class="user"></span>
+                        </span>
+                        <input type="text" name="username" placeholder="请输入用户名" />
+                      </div>
+                      <div>
+                        <span class="svg-container">
+                          <span class="username"></span>
+                        </span>
+                        <input type="password" name="password" placeholder="请输入密码"/>
+                      </div>
+                      <input type="submit" style="width:100%;margin-bottom:30px;" value="登录"></input>
+                </form>
+                </div>
+              </div>
+        </div>
+    </body>
+    <!-- 引入组件库 -->
+    <script src="../js/vue.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script src="../js/axios-0.18.0.js"></script>
+
+    <script>
+
+        //权限校验
+        var preVue =  new Vue({
+            el: '#app',
+            data:{
+                menuList:[
+                    {
+                        "path": "1",
+                        "title": "工作台",
+                        "icon":"fa-dashboard",
+                        "children": []
+                    },
+                    {
+                        "path": "2",
+                        "title": "会员管理",
+                        "icon":"fa-user-md",
+                        "children": [
+                            {
+                                "path": "/2-1",
+                                "title": "会员档案",
+                                "linkUrl":"member.html",
+                                "children":[]
+                            },
+                            {
+                                "path": "/2-2",
+                                "title": "体检上传",
+                                "children":[]
+                            },
+                            {
+                                "path": "/2-3",
+                                "title": "会员统计",
+                                "linkUrl":"all-item-list.html",
+                                "children":[]
+                            },
+                        ]
+                    },
+                    {
+                        "path": "3",
+                        "title": "预约管理",
+                        "icon":"fa-tty",
+                        "children": [
+                            {
+                                "path": "/3-1",
+                                "title": "预约列表",
+                                "linkUrl":"ordersettinglist.html",
+                                "children":[]
+                            },
+                            {
+                                "path": "/3-2",
+                                "title": "预约设置",
+                                "linkUrl":"ordersetting.html",
+                                "children":[]
+                            },
+                            {
+                                "path": "/3-3",
+                                "title": "套餐管理",
+                                "linkUrl":"setmeal.html",
+                                "children":[]
+                            },
+                            {
+                                "path": "/3-4",
+                                "title": "检查组管理",
+                                "linkUrl":"checkgroup.html",
+                                "children":[]
+                            },
+                            {
+                                "path": "/3-5",
+                                "title": "检查项管理",
+                                "linkUrl":"checkitem.html",
+                                "children":[]
+                            },
+                        ]
+                    },
+                    {
+                        "path": "4",
+                        "title": "健康评估",
+                        "icon":"fa-stethoscope",
+                        "children":[
+                            {
+                                "path": "/4-1",
+                                "title": "中医体质辨识",
+                                "linkUrl":"all-medical-list.html",
+                                "children":[]
+                            },
+                        ]
+                    },
+                    {
+                        "path": "5",     //菜单项所对应的路由路径
+                        "title": "统计分析",     //菜单项名称
+                        "icon":"fa-heartbeat",
+                        "children":[//是否有子菜单，若没有，则为[]
+                            {
+                                "path": "/5-1",
+                                "title": "工作量统计",
+                                "linkUrl":"all-medical-list.html",
+                                "children":[]
+                            }
+                        ]
+                    }
+                ],
+                username:null // 用户名
+            },
+            created:function () {
+                //发送请求获取当前登录用户的用户名
+                axios.get('/user/getUsername.do').then((response)=>{
+                    this.username = response.data.data;
+                });
+            }
+        });
+        $(function() {
+            var wd = 200;
+            $(".el-main").css('width', $('body').width() - wd + 'px');
+        });
+
+    </script>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 页面meta -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>传智健康</title>
+        <meta name="description" content="传智健康">
+        <meta name="keywords" content="传智健康">
+        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+        <!-- 引入样式 -->
+        <link rel="stylesheet" href="../plugins/elementui/index.css">
+        <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="../css/style.css">
+        <!-- 引入组件库 -->
+        <script type="text/javascript" src="../js/jquery.min.js"></script>
+        <script src="../js/vue.js"></script>
+        <script src="../plugins/elementui/index.js"></script>
+        <script src="../js/axios-0.18.0.js"></script>
+        <style>
+            .datatable {
+                position: relative;
+                box-sizing: border-box;
+                -webkit-box-flex: 1;
+                width: 100%;
+                max-width: 100%;
+                font-size: 14px;
+                color: rgb(96, 98, 102);
+                overflow: hidden;
+                flex: 1 1 0%;
+            }
+            .datatable td, .datatable th {
+                padding: 12px 0;
+                min-width: 0;
+                -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+                text-overflow: ellipsis;
+                vertical-align: middle;
+                position: relative;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body class="hold-transition">
+        <div id="app">
+            <div class="content-header">
+                <h1>角色管理</h1>
+                <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+                    <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+                    <el-breadcrumb-item>系统设置</el-breadcrumb-item>
+                    <el-breadcrumb-item>角色管理</el-breadcrumb-item>
+                </el-breadcrumb>
+            </div>
+            <div class="app-container">
+                <div class="box">
+                    <div class="filter-container">
+                        <el-input placeholder="角色名称" v-model="pagination.queryString" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"></el-input>
+                        <el-button @click="findPage()"  class="dalfBut">查询</el-button>
+                        <el-button type="primary" class="butT" @click="handleCreate()">新建</el-button>
+                    </div>
+                    <el-table size="small" current-row-key="id" :data="dataList"  stripe highlight-current-row>
+                        <el-table-column type="index" align="center" label="序号"></el-table-column>
+                        <el-table-column prop="name" label="角色名称" align="center"></el-table-column>
+                        <el-table-column label="状态" align="center">
+                            <template slot-scope="scope">
+                                <span>{{ scope.row.roleStatus == '2' ? '已禁用' : '使用中'}}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="name" label="角色" align="center"></el-table-column>
+                        <el-table-column prop="createTime" label="创建时间" align="center"></el-table-column>
+                        <el-table-column label="操作" align="center">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="mini" @click="handleUpdate(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="pagination-container">
+                        <el-pagination
+                            class="pagiantion"
+                            @current-change="handleCurrentChange"
+                            :current-page="pagination.currentPage"
+                            :page-size="pagination.pageSize"
+                            layout="total, prev, pager, next, jumper"
+                            :total="pagination.total">
+                        </el-pagination>
+                    </div>
+                    <!-- 新增标签弹层 -->
+                    <el-dialog title="新增角色" :visible.sync="dialogFormVisible">
+                        <el-form :model="formData" label-width="80px" >
+                            <el-form-item label="角色名称" prop="name">
+                                <el-input v-model="formData.name"></el-input>
+                            </el-form-item>
+                            <el-form-item label="状态" prop="roleStatus">
+                                <el-select v-model="formData.roleStatus">
+                                    <el-option label="启用" value="1"></el-option>
+                                    <el-option label="禁用" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="">
+                                <div class="checkScrol">
+                                    <table class="datatable">
+                                        <thead>
+                                        <tr>
+                                            <th>选择</th>
+                                            <th>权限名称</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="p in tableData">
+                                            <td>
+                                                <input :id="p.id" v-model="permissionsId" type="checkbox" :value="p.id">
+                                            </td>
+                                            <td><label :for="p.id">{{p.name}}</label></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible = false">取消</el-button>
+                            <el-button type="primary" @click="handleAdd()">确定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 编辑标签弹层 -->
+                    <el-dialog title="编辑角色" :visible.sync="dialogFormVisible4Edit">
+                        <el-form :model="formData" label-width="80px" >
+                            <el-form-item label="角色名称">
+                                <el-input v-model="formData.name"></el-input>
+                            </el-form-item>
+                            <el-form-item label="状态">
+                                <el-select v-model="formData.roleStatus">
+                                    <el-option label="启用" value="1"></el-option>
+                                    <el-option label="禁用" value="2"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="">
+                                <div class="checkScrol">
+                                    <table class="datatable">
+                                        <thead>
+                                        <tr>
+                                            <th>选择</th>
+                                            <th>权限名称</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        <tr v-for="p in tableData">
+                                            <td>
+                                                <input :id="p.id" v-model="permissionsId" type="checkbox" :value="p.id">
+                                            </td>
+                                            <td><label :for="p.id">{{p.name}}</label></td>
+                                        </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer" class="dialog-footer">
+                            <el-button @click="dialogFormVisible4Edit = false">取消</el-button>
+                            <el-button type="primary" @click="handleEdit()">确定</el-button>
+                        </div>
+                    </el-dialog>
+
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        var vue = new Vue({
+            el: '#app',
+            data:{
+                pagination: {//分页相关属性
+                    currentPage: 1,
+                    pageSize:10,
+                    total:100,
+                    queryString:null,
+                },
+                dataList: [],//列表数据
+                formData: {},//表单数据
+                tableData:[],//新增和编辑表单中对应的权限列表数据
+                permissionsId:[],//新增和编辑表单中权限对应的复选框，基于双向绑定可以进行回显和数据提交
+                dialogFormVisible: false,//控制添加窗口显示/隐藏
+                dialogFormVisible4Edit:false,//控制编辑窗口显示/隐藏
+            },
+            created() {
+                this.findPage();
+            },
+            methods:{
+                //编辑(确认修改)
+                handleEdit() {
+                    axios.post("/role/updateRole.do?permissionsId="+vue.permissionsId,vue.formData).then((res) => {
+                        if (res.data.flag) {
+                            //显示弹框
+                            vue.dialogFormVisible4Edit=false;
+                            this.$message({
+                                message:res.data.message,
+                                type:"success"
+                            })
+                        }else {
+                            this.$message.error(res.data.message);
+                        }
+                    }).catch(function (err) {
+                        vue.showMessage(err);
+                    }).finally(function () {
+                        vue.findPage();
+                    })
+                },
+                //新增(确认)
+                handleAdd () {
+                    axios.post("/role/addRole.do?permissionsId=" + vue.permissionsId,vue.formData).then((response) =>{
+                        vue.dialogFormVisible = false;
+                        if (response.data.flag) {
+                            this.$message({
+                                message:response.data.message,
+                                type:"success"
+                            })
+                        }else {
+                            this.$message.error(response.data.message)
+                        }
+                    }).catch((error) =>{
+                        vue.showMessage(error);
+                    }).finally(() =>{
+                        vue.findPage();
+                    })
+                },
+                //分页查询
+                findPage() {
+                    //获取视图数据
+                    var currentPageParam = this.pagination.currentPage;
+                    var paramPageSize = this.pagination.pageSize;
+                    var paramQueryString = this.pagination.queryString;
+                    //填充模型数据
+                    axios.post("/role/findPageRole.do",{
+                        currentPage:currentPageParam,
+                        pageSize:paramPageSize,
+                        queryString:paramQueryString
+                    }).then((response)=>{
+                        vue.pagination.total = response.data.data.total;
+                        vue.dataList = response.data.data.rows;
+                    }).catch((error) => {
+                        vue.showMessage(error);
+                    })
+                },
+                //输入框点击enter键事件
+                handleFilter(){
+                    this.findPage();
+                },
+                // 重置表单
+                resetForm() {
+                    this.formData = {};
+                    this.permissionsId = [];
+                },
+                // 弹出添加窗口
+                handleCreate() {
+                    this.resetForm();
+                    this.dialogFormVisible = true;
+                    //显示所有权限
+                    axios.get("/role/findAllPermission.do").then((response) =>{
+                        if (response.data.flag) {
+                            vue.tableData = response.data.data;
+                        }else {
+                            this.$message.error(response.data.message)
+                        }
+                    }).catch((error) => {
+                        vue.showMessage(error);
+                    })
+                },
+                // 弹出编辑窗口
+                handleUpdate(row) {
+                    axios.post("/role/findRoleById/" + row.id + ".do"
+                    ).then(function (res) {
+                        if (res.data.flag) {
+                            //显示弹框
+                            vue.dialogFormVisible4Edit=true;
+                            //回显数据(检查组数据+检查项数据)
+                            vue.formData = res.data.data;
+                            //加载权限所有信息
+                            axios.get("/role/findAllPermission.do"
+                            ).then(function (res) {
+                                if (res.data.flag) {
+                                    vue.tableData = res.data.data;
+                                    //查询已勾选的权限
+                                    axios.post("/role/findRoleHadPermission/" + row.id + ".do"
+                                    ).then((response) =>{
+                                        vue.permissionsId = response.data.data;
+                                    }).catch((err) => {
+                                        alert(err)
+                                    })
+                                }else {
+                                    this.$message.error(res.data.message);
+                                }
+                            }).catch(function (err) {
+                                vue.showMessage(err);
+                            });
+
+                        }else {
+                            this.$message.error(res.data.message);
+                        }
+                    }).catch(function (err) {
+                        vue.showMessage(err);
+                    }).finally(function () {
+                        vue.findPage();
+                    })
+
+                },
+                //切换页码
+                handleCurrentChange(currentPage) {
+                    this.pagination.currentPage = currentPage;
+                    this.findPage();
+                },
+                // 删除
+                handleDelete(row) {
+                    //判断该角色是否为启用,如果是启用,可直接删除(略)
+                    //判断该角色是否有状态为在职的用户在用
+                    axios.post("/role/roleHadUserUse/" + row.id + ".do").then((response) =>{
+                        //如果没有(true),可以删除
+                        if (response.data.flag) {
+                            axios.post("/role/deleteRole/" + row.id + ".do").then((response) =>{
+                                if (response.data.flag) {
+                                    this.$message({
+                                        message:response.data.message,
+                                        type:"success"
+                                    })
+                                }else {
+                                    this.$message.error(response.data.message);
+                                }
+                            }).catch()
+                        }else {
+                            //如果有用户,则不可以删除,提示有用户在使用,不允许删除
+                            this.$message.error("该角色有用户在使用,不允许删除!")
+                        }
+                    }).catch((err) =>{
+                        vue.showMessage(err);
+                    }).finally(() =>{
+                        vue.findPage();
+                    })
+
+                },
+                //权限不足提示
+                showMessage(message){
+                    console.log(message);
+                    if (message == 'Error: Request failed with status code 403') {
+                        //权限不足
+                        this.$message.error("无访问权限")
+                    }else {
+                        this.$message.error('未知错误');
+                        return;
+                    }
+                }
+            }
+        })
+    </script>
+</html>

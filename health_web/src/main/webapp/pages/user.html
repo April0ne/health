@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <!-- 页面meta -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>传智健康</title>
+        <meta name="description" content="传智健康">
+        <meta name="keywords" content="传智健康">
+        <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+        <!-- 引入样式 -->
+        <link rel="stylesheet" href="../plugins/elementui/index.css">
+        <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="../css/style.css">
+
+
+    </head>
+    <body class="hold-transition">
+        <div id="app">
+            <div class="content-header">
+                <h1>用户管理</h1>
+                <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+                    <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+                    <el-breadcrumb-item>系统设置</el-breadcrumb-item>
+                    <el-breadcrumb-item>用户管理</el-breadcrumb-item>
+                </el-breadcrumb>
+            </div>
+            <div class="app-container">
+                <div class="box">
+                    <div class="filter-container">
+                        <el-input placeholder="用户姓名" v-model="pagination.queryString" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter"></el-input>
+                        <el-button @click="findPage()" class="dalfBut">查询</el-button>
+                        <el-button type="primary" class="butT" @click="handleCreate()">新建</el-button>
+                    </div>
+                    <el-table size="small" current-row-key="id" :data="dataList" stripe highlight-current-row>
+                        <el-table-column type="index" align="center" label="序号"></el-table-column>
+                        <el-table-column prop="username" label="员工姓名" align="center"></el-table-column>
+                        <el-table-column prop="telephone" label="联系电话" align="center"></el-table-column>
+                        <el-table-column prop="gender" label="性别" align="center"></el-table-column>
+                        <el-table-column label="状态" align="center">
+                            <template slot-scope="scope">
+                                <span>{{ scope.row.station == '1' ?  '在职' : '离职'}}</span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column  label="角色" align="center">
+                            <template slot-scope="scope">
+                                <!--<span>{{ scope.row.roles }}</span>-->
+                                <span v-for="role in (scope.row.roles)">
+                                    {{ role.name }}
+                                </span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" align="center">
+                            <template slot-scope="scope">
+                                <el-button type="primary" size="mini" @click="handleUpdate(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="pagination-container">
+                        <el-pagination
+                            class="pagiantion"
+                            @current-change="handleCurrentChange"
+                            :current-page="pagination.currentPage"
+                            :page-size="pagination.pageSize"
+                            layout="total, prev, pager, next, jumper"
+                            :total="pagination.total">
+                        </el-pagination>
+                    </div>
+                    <!-- 新增用户 -->
+                    <div class="add-form">
+                        <el-dialog title="新增用户" :visible.sync="dialogFormVisible">
+                            <el-form ref="dataAddForm" :model="formData" :rules="rules" label-position="right" label-width="100px">
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="用户名" prop="username">
+                                            <el-input v-model="formData.username"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="密码">
+                                            <el-input v-model="formData.password"/>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="联系方式" prop="telephone">
+                                            <el-input v-model="formData.telephone"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="账号状态">
+                                            <el-select v-model="formData.station">
+                                                <el-option label="在职" value="1"></el-option>
+                                                <el-option label="离职" value="2"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="生日">
+                                            <el-input v-model="formData.orderDate" type="text"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="性别">
+                                            <el-select v-model="formData.gender">
+                                                <el-option label="男" value="1"></el-option>
+                                                <el-option label="女" value="2"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col>
+                                        <el-form-item label="备注">
+                                            <el-input v-model="formData.remark" type="text"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col>
+                                        <el-form-item label="">
+                                            <div class="checkScrol">
+                                                <table class="datatable">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>选择</th>
+                                                        <th>角色名称</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr v-for="r in tableData">
+                                                        <td>
+                                                            <input :id="r.id" v-model="rolesId" type="checkbox" :value="r.id">
+                                                        </td>
+                                                        <td><label :for="r.id">{{r.name}}</label></td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                            </el-form>
+                            <div slot="footer" class="dialog-footer">
+                                <el-button @click="dialogFormVisible = false">取消</el-button>
+                                <el-button type="primary" @click="handleAdd()">确定</el-button>
+                            </div>
+                        </el-dialog>
+                    </div>
+
+                    <!-- 编辑标签弹层 -->
+                    <div class="add-form">
+                        <el-dialog title="编辑" :visible.sync="dialogFormVisible4Edit">
+                            <el-form ref="dataAddForm" :model="formData" :rules="rules" label-position="right" label-width="100px">
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="用户名" prop="username">
+                                            <el-input v-model="formData.username"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="密码">
+                                            <el-input v-model="formData.password"/>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="联系方式" prop="telephone">
+                                            <el-input v-model="formData.telephone"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="账号状态">
+                                            <el-select v-model="formData.station">
+                                                <el-option label="在职" value="1"></el-option>
+                                                <el-option label="离职" value="2"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col :span="12">
+                                        <el-form-item label="生日">
+                                            <el-input v-model="formData.orderDate" type="text"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col :span="12">
+                                        <el-form-item label="性别">
+                                            <el-select v-model="formData.gender">
+                                                <el-option label="男" value="1"></el-option>
+                                                <el-option label="女" value="2"></el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                                <el-row>
+                                    <el-col>
+                                        <el-form-item label="备注">
+                                            <el-input v-model="formData.remark" type="text"/>
+                                        </el-form-item>
+                                    </el-col>
+                                    <el-col>
+                                        <el-form-item label="">
+                                            <div class="checkScrol">
+                                                <table class="datatable">
+                                                    <thead>
+                                                    <tr>
+                                                        <th>选择</th>
+                                                        <th>角色名称</th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    <tr v-for="r in tableData">
+                                                        <td>
+                                                            <input :id="r.id" v-model="rolesId" type="checkbox" :value="r.id">
+                                                        </td>
+                                                        <td><label :for="r.id">{{r.name}}</label></td>
+                                                    </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </el-form-item>
+                                    </el-col>
+                                </el-row>
+                            </el-form>
+                            <div slot="footer" class="dialog-footer">
+                                <el-button @click="dialogFormVisible4Edit = false">取消</el-button>
+                                <el-button type="primary" @click="handleEdit()">确定</el-button>
+                            </div>
+                        </el-dialog>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <!-- 引入组件库 -->
+    <script src="../js/vue.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script src="../plugins/datapicker/datePicker.js"></script>
+    <script src="../plugins/healthmobile.js"></script>
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script src="../js/axios-0.18.0.js"></script>
+
+
+
+    <script>
+
+        //增删改查
+        var vue = new Vue({
+            el: '#app',
+            data:{
+                pagination: {//分页相关模型数据
+					  currentPage: 1,//当前页码
+					  pageSize:4,//每页显示的记录数
+					  total:0,//总记录数
+					  queryString:null//查询条件
+				},
+				dataList: [],//当前页要展示的分页列表数据  {name:"zhangsan",telephone:"123",roles:["11","kk"]}
+                // roleResources:{},
+                // roleList:[],//角色列表
+                formData: {},//表单数据
+                tableData:[],//新增和编辑表单中对应的角色列表数据
+                rolesId:[],//新增和编辑表单中角色对应的复选框，基于双向绑定可以进行回显和数据提交
+                dialogFormVisible: false,//增加表单是否可见
+                dialogFormVisible4Edit:false,//编辑表单是否可见
+                rules: {//校验规则
+                    code: [{ required: true, message: '项目编码为必填项', trigger: 'blur' }],
+                    name: [{ required: true, message: '项目名称为必填项', trigger: 'blur' }]
+                }
+            },
+            //钩子函数，VUE对象初始化完成后自动执行
+            created() {
+                this.findPage();
+            },
+            methods: {
+                //确认编辑检查项
+                handleEdit() {
+
+                },
+                //确认新增检查项
+                handleAdd () {
+                    axios.post("/user/addUser.do?rolesId=" + vue.rolesId,vue.formData).then((response) =>{
+                        vue.dialogFormVisible = false;
+                        if (response.data.flag) {
+                            console.log(response);
+                            this.$message({
+                                message:response.data.message,
+                                type:"success"
+                            })
+                        }else {
+                            this.$message.error(response.data.message)
+                        }
+                    }).catch((error) =>{
+                        console.log(error);
+                        vue.showMessage(error);
+                    }).finally(() =>{
+                        vue.findPage();
+                    })
+                },
+                //分页查询
+                findPage() {
+                    //获取视图数据
+                    var currentPageParam = this.pagination.currentPage;
+                    var paramPageSize = this.pagination.pageSize;
+                    var paramQueryString = this.pagination.queryString;
+                    //填充模型数据
+                    axios.post("/user/findPageUser.do",{
+                        currentPage:currentPageParam,
+                        pageSize:paramPageSize,
+                        queryString:paramQueryString
+                    }).then((response)=>{
+                        vue.pagination.total = response.data.data.total;
+                        vue.dataList = response.data.data.rows;
+                    }).catch((error) => {
+                        vue.showMessage(error);
+                    })
+                },
+                //输入框点击enter键事件
+                handleFilter(){
+                    this.findPage();
+                },
+                // 重置新增检查项的表单:重置为空
+                resetForm() {
+                    this.formData={};
+                    this.rolesId = [];
+                },
+                // 弹出添加窗口
+                handleCreate() {
+                    this.resetForm();
+                    this.dialogFormVisible = true;
+                    //显示所有权限
+                    axios.get("/user/findAllRoles.do").then((response) =>{
+                        if (response.data.flag) {
+                            vue.tableData = response.data.data;
+                        }else {
+                            this.$message.error(response.data.message)
+                        }
+                    }).catch((error) => {
+                        vue.showMessage(error);
+                    })
+                },
+                // 弹出编辑窗口
+                handleUpdate(row) {
+
+                },
+                //切换页码
+                handleCurrentChange(currentPage) {
+                    this.pagination.currentPage = currentPage;
+                    this.findPage();
+                },
+                // 删除
+                handleDelete(row) {
+
+                },
+                //权限不足提示
+                showMessage(message){
+                    if (message == 'Error: Request failed with status code 403') {
+                        //权限不足
+                        this.$message.error("无访问权限")
+                    }else {
+                        this.$message.error('未知错误');
+                        return;
+                    }
+                }
+            }
+        });
+    </script>
+</html>
