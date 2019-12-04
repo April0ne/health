@@ -1,0 +1,58 @@
+<?xml version = "1.0" encoding = "utf-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/aop
+       http://www.springframework.org/schema/aop/spring-aop.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/util
+       http://www.springframework.org/schema/util/spring-util.xsd
+       http://code.alibabatech.com/schema/dubbo
+       http://code.alibabatech.com/schema/dubbo/dubbo.xsd
+       http://www.springframework.org/schema/mvc 
+       http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+    <mvc:annotation-driven >
+        <mvc:message-converters register-defaults="true">
+            <!--
+            不需要视图解析器，项目中的所有的请求都返回json数据结构
+            FastJsonHttpMessageConverter配置定义了 @ResponseBody 支持的返回类型，
+            json对空键值的处理方式 和 统一的日期返回格式（格式：yyyy-MM-dd）
+            -->
+            <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+                <property name="supportedMediaTypes" value="application/json"/>
+                <property name="features">
+                    <list>
+                        <value>WriteMapNullValue</value>
+                        <value>WriteDateUseDateFormat</value>
+                    </list>
+                </property>
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+    <!--注册dubbo消费者-->
+    <dubbo:application name="healthmobile_web"/>
+    <dubbo:registry address="zookeeper://49.234.126.177:2181"/>
+    <dubbo:annotation package="com.aprilhealth.controller"/>
+    <!--
+       超时全局设置 10分钟
+       check=false 不检查服务提供方，开发阶段建议设置为false
+       check=true 启动时检查服务提供方，如果服务提供方没有启动则报错
+   -->
+
+    <dubbo:consumer timeout="600000" check="false"/>
+    <import resource="classpath:spring-redis.xml"></import>
+
+    
+</beans>
