@@ -1,0 +1,63 @@
++ 需求:
+    + 分页查询
+        - 下载文件
+    + 新增套餐
+        - 上传文件
+
+
++ 分析:
+    【问题】
+    前端如何返回数据(参数数量及参数类型)
+        public Result uploadImage(@RequestParam("imgFile") MultipartFile multipartFile){//这个前端怎么传的?
+        【答】== 七牛云返回的数据
+
+    【问题】
+    //上传文件
+    QiNiuStoreUtils.upload2Qiniu(multipartFile.getBytes(),fileNewName);//为什么是转换成字节数组,上传工具要的不是路径吗?
+        【答】== 参见上传文件工具类第二个方法. MultipartFile本身是封装了上传的文件,并存储在request中,request结束,它也消失了.
+
+
+
++ 上传图片部分:
+     methods: {
+                    //文件上传成功后的钩子，response为服务端返回的值，file为当前上传的文件封装成的js对象
+                    handleAvatarSuccess(response, file) {// 【问题】  这个file没有用到?还有上面uolaod的请求细节.
+                        // console.log("handleAvatarSuccess = " );
+                        // console.log(response);
+                        // console.log("response.data = ");
+                        // console.log(response.data);//此处为空
+                        //【问题】 response数据格式,和之前的不一样,没有用data包裹. == {data: null, flag: true, message: "图片上传成功"} 返回数据都是用Result包装的.为什么有这样的区别?  【答】== 该返回数据是七牛云的，该返回样式也是由七牛云定义的。
+                        // 此链接是七牛云存储文件的连接,后面拼接的是图片的文件名== data,是后台返回的新的文件名称,加上这个类连接就可以远程访问了.
+                        // 【问题】只要点击上传,图片自动保存到了七牛云,即使最后取消了新增套餐.后期要优化.== 【答】redis+定时任务
+                        vue.imageUrl = "http://q1529roac.bkt.clouddn.com/"+response.data;
+                        this.$message({
+                            message:response.message,
+                            type:response.flag ? "success":"error"
+                        })
+
+                        this.formData.img = response.data;//数据没有保存到图片   ==因为上面data数据null所以没有,现在有了,
+                    },
+
+
+
+
++ redis
+    + controller
+        【问题】这里有个问题呀,如果这里出错了,也会捕获,最终返回给前端的信息是保存失败,但是因为上面代码执行了,且保存成功了,redis存储的操作放在这边会不会有问题呀?
+        //将图片名称存储至redis
+        jedisPool.getResource().sadd(RedisConstant.SETMEAL_PIC_RESOURCES,fileNewName);
+
+        【问题】讲义上是此处在service层面操作,我是在controller层面,为什么不在controller
+        //数据库新增套餐成功,将图片名称存储至redis
+        jedisPool.getResource().sadd(RedisConstant.SETMEAL_PIC_DB_RESOURCES,setmeal.getImg());
+    - 配置文件
+            【答】因为这是分布式,service作为服务商应该提供统一的处理,方便其他消费者调用;另外,操作数据库本来也是service做的.
+
+        【问题】
+        - redis访问需要密码,但是配置文件没有password参数,web加载配置文件也能成功
+            【答】连接服务器正常,但是不代表可以直接操作,所以没有密码能量连接,但是无法操作.
+
+    关于配置文件
+        web中配置了spring-redis.xml
+        jbos也配置了applicationContext-redis.xml
+        会不会重复了.

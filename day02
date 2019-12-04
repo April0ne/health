@@ -1,0 +1,55 @@
+需求:
+    新增检查项
+    删除检查项
+    编辑检查项
+    查询检查项分页
+
+所属模块: 预约管理-检查项管理
+
+优化:
+    删除检查项
+             因为checkitem和checkgroup二者有一个中间表t_checkgroup_checkitem,表设计时已经要求,如果checkitem_id有管理checkgroup_id则不允许删除checkitem.我为了确认二者是否有关联,处理方式是:直接从数据库-表t_checkgroup_checkitem查询,如果count>0则表示有关联,小于0则表示没有.
+            【优化】:在controller捕获删除的异常来判断是否删除成功,并且指明了不能删除的原因(service添加的原因),这一点确实要友好.而且原因明确.
+            【思考】:既然controller捕获异常,是否可以直接不判断是否有关联,直接在controller捕获异常.这样做也不是不可以,不过,判断一下,还是安全点.我的处理方式就是,如果有关联,直接不去调用删除方法,异常也不会出现.
+
+                我的代码如下:
+                    service:
+                        @Override
+                            public boolean deleteCheckItem(Integer id) throws Exception  {
+                                //判断当前项目是否和checkgroup存在关联关系
+                                boolean flag;
+                                Integer cg_ci = checkItemDao.findCheckGroup_CheckItemByCheckItemID(id);
+                                if (cg_ci > 0) {
+                                    flag = false;
+                                }else {
+                                    flag = checkItemDao.deleteCheckItem(id) > 0 ? true:false;
+                                }
+                                return flag;
+                            }
+                【讲义代码】:在controller捕获删除的异常来判断是否删除成功,并且指明了不能删除的原因(service添加的原因),这一点确实要友好.而且原因明确.
+                        public void delete(Integer id) throws RuntimeException{
+                            //查询当前检查项是否和检查组关联
+                            long count = checkItemDao.findCountByCheckItemId(id);
+                            if(count > 0){
+                                //当前检查项被引用，不能删除
+                                throw new RuntimeException("当前检查项被检查组引用，不能删除");
+                            }
+                            checkItemDao.deleteById(id);
+                            //【既然是通过异常捕获,是否可以直接不判断是否有关联,直接在controller捕获异常.这样做也不是不可以,不过,判断一下,还是安全点.我的处理方式就是,如果有关联,直接不去调用删除方法,异常也不会出现.】
+                        }
+
+                    补充controller代码:
+                        @RequestMapping("/delete")
+                        public Result delete(Integer id){
+                            try {
+                                checkItemService.delete(id);
+                            }catch (RuntimeException e){
+                                return new Result(false,e.getMessage());
+                            }catch (Exception e){
+                                return new Result(false, MessageConstant.DELETE_CHECKITEM_FAIL);
+                            }
+                            return new Result(true,MessageConstant.DELETE_CHECKITEM_SUCCESS);
+                        }
+
+    查询之分页查询
+        讲义上,写的十分简单,其中PageResult分装十分简洁.因为使用了插件.
